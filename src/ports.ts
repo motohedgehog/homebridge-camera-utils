@@ -49,14 +49,109 @@ export async function reservePorts({
   return ports
 }
 
-export function bindToPort(socket: Socket) {
-  return new Promise<number>((resolve, reject) => {
-    socket.on('error', reject)
+export function bindToPort(
+  socket: Socket,
+  {
+    portRange,
+    signal,
+  }: {
+    portRange?: { start: number, end: number }
+    signal?: AbortSignal
+  } = {},
+) {
+  if (
+    portRange !== undefined
+    && (
+      !portRange
+      || !Number.isInteger(portRange.start)
+      || !Number.isInteger(portRange.end)
+      || portRange.start < 1
+      || portRange.end > 65535
+      || portRange.start > portRange.end
+    )
+  ) {
+    return Promise.reject(new RangeError('portRange must be within 1–65535 and start must not exceed end'))
+  }
 
-    // 0 means select a random open port
-    socket.bind(0, () => {
-      const { port } = socket.address() as AddressInfo
-      resolve(port)
-    })
+  return new Promise<number>((resolve, reject) => {
+    let settled = false
+    const firstPort = portRange?.start ?? 0
+    const lastPort = portRange?.end ?? 0
+    let onAbort = () => {}
+
+    const cleanup = () => signal?.removeEventListener('abort', onAbort)
+    const fail = (error: Error) => {
+      if (settled) {
+        return
+      }
+
+      settled = true
+      cleanup()
+      reject(error)
+    }
+    onAbort = () => {
+      const error = new Error('The operation was aborted')
+      error.name = 'AbortError'
+      fail(error)
+    }
+    const bind = (port: number) => {
+      if (settled) {
+        return
+      }
+      if (signal?.aborted) {
+        onAbort()
+        return
+      }
+
+      let onListening = () => {}
+      const onError = (error: Error & { code?: string }) => {
+        socket.off('error', onError)
+        socket.off('listening', onListening)
+
+        if (settled) {
+          socket.close()
+          return
+        }
+
+        if (signal?.aborted) {
+          onAbort()
+        } else if (error.code === 'EADDRINUSE' && portRange && port < lastPort) {
+          bind(port + 1)
+        } else {
+          fail(error)
+        }
+      }
+      onListening = () => {
+        socket.off('error', onError)
+        socket.off('listening', onListening)
+
+        if (settled || signal?.aborted) {
+          if (!settled) {
+            onAbort()
+          }
+          socket.close()
+          return
+        }
+
+        settled = true
+        cleanup()
+        const { port: boundPort } = socket.address() as AddressInfo
+        resolve(boundPort)
+      }
+
+      socket.once('listening', onListening)
+      socket.once('error', onError)
+
+      try {
+        socket.bind(port)
+      } catch (error) {
+        socket.off('error', onError)
+        socket.off('listening', onListening)
+        fail(error as Error)
+      }
+    }
+
+    signal?.addEventListener('abort', onAbort, { once: true })
+    bind(firstPort)
   })
 }
