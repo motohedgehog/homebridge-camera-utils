@@ -1,17 +1,20 @@
 {
-  "name": "@homebridge/camera-utils",
+  "name": "@motohedgehog/homebridge-camera-utils",
   "version": "3.0.0",
   "type": "module",
   "description": "Utilities to simplify homebridge camera plugin development",
-  "author": "dgreif",
+  "author": "motohedgehog",
+  "contributors": [
+    "dgreif"
+  ],
   "license": "MIT",
-  "homepage": "https://github.com/homebridge/camera-utils#readme",
+  "homepage": "https://github.com/motohedgehog/homebridge-camera-utils#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/homebridge/camera-utils.git"
+    "url": "git+https://github.com/motohedgehog/homebridge-camera-utils.git"
   },
   "bugs": {
-    "url": "https://github.com/homebridge/camera-utils/issues"
+    "url": "https://github.com/motohedgehog/homebridge-camera-utils/issues"
   },
   "keywords": [
     "homebridge",
@@ -45,7 +48,7 @@
     "access": "public"
   },
   "maintainers": [
-    "dgreif"
+    "motohedgehog"
   ],
   "dependencies": {
     "execa": "^9.5.1",

@@ -1,5 +1,6 @@
 {
   "out": "docs",
+  "highlightLanguages": ["bash", "console", "css", "html", "ini", "javascript", "json", "jsonc", "json5", "tsx", "typescript"],
   "exclude": ["src/**/*.spec.ts"],
   "entryPoints": [
     "src/index.ts"
