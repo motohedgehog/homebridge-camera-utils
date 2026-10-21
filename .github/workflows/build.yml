@@ -3,16 +3,58 @@ name: Node Build
 on:
   push:
     branches: [latest]
+    tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
 jobs:
   build_and_test:
-    uses: homebridge/.github/.github/workflows/nodejs-build-and-test.yml@latest
+    uses: homebridge/.github/.github/workflows/nodejs-build-and-test.yml@e033cad4852d03b7d19d7307aafedea11ed4a216 # latest, 2026-10-17
     with:
       enable_coverage: true
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
   lint:
-    needs: build_and_test
-    uses: homebridge/.github/.github/workflows/eslint.yml@latest
+    uses: homebridge/.github/.github/workflows/eslint.yml@e033cad4852d03b7d19d7307aafedea11ed4a216 # latest, 2026-10-17
+
+  publish:
+    needs: [build_and_test, lint]
+    if: ${{ github.repository_owner == 'motohedgehog' && github.event_name == 'push' && (github.ref == 'refs/heads/latest' || startsWith(github.ref, 'refs/tags/v')) }}
+    concurrency:
+      group: camera-utils-packages
+      queue: max
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          registry-url: https://npm.pkg.github.com
+          scope: "@motohedgehog"
+      - run: npm ci
+      - id: prepare
+        run: node .github/scripts/prepare-publish.mjs
+      - run: npm run prepublishOnly
+      - name: Publish branch build
+        if: github.ref == 'refs/heads/latest'
+        run: npm publish --ignore-scripts --registry=https://npm.pkg.github.com --tag "${{ steps.prepare.outputs.tag }}"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish stable release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: npm publish --ignore-scripts --registry=https://npm.pkg.github.com
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

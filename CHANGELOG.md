@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.1.0](https://github.com/motohedgehog/camera-utils/compare/v3.1.0...v3.0.0) (2026-10-21)
+
+### Other Changes
+
+* update package details and API documentation for the fork
+* replace npm releases with GitHub Packages
+    * pushing to `latest` publishes development versions
+    * pushing `vX.Y.Z` tags publish stable versions
+    * add release version checks and tests
+* add AI agent guidance and skill configuration
+
 ### [3.0.0](https://github.com/homebridge/camera-utils/compare/v2.2.7...v3.0.0) (2024-11-03)
 
 ### Major Changes

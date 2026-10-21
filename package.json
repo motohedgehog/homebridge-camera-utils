@@ -1,6 +1,6 @@
 {
   "name": "@motohedgehog/homebridge-camera-utils",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "type": "module",
   "description": "Utilities to simplify homebridge camera plugin development",
   "author": "motohedgehog",
@@ -31,9 +31,9 @@
     "test": "vitest",
     "test-coverage": "vitest run --coverage",
     "watch:link": "npm link && tsc --watch --declaration",
-    "lint": "eslint '**/*.ts' --fix",
+    "lint": "eslint '**/*.ts' '.github/scripts/*.mjs'",
     "build": "npm run clean && tsc --declaration",
-    "prepublishOnly": "npm i --package-lock-only && npm run lint && npm run build",
+    "prepublishOnly": "npm run lint && npm run build",
     "postpublish": "npm run clean",
     "clean": "rimraf dist && rimraf coverage",
     "docs": "typedoc",
@@ -45,7 +45,7 @@
     }
   },
   "publishConfig": {
-    "access": "public"
+    "registry": "https://npm.pkg.github.com"
   },
   "maintainers": [
     "motohedgehog"
